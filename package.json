@@ -1,0 +1,14 @@
+{
+  "name": "randonnee-du-cercle",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "audio": "python3 tools/soundtrack.py out/soundtrack.wav",
+    "render": "node tools/render.mjs video out/final.mp4",
+    "contact": "bash tools/contact.sh out/final.mp4 out/contact.png",
+    "build": "npm run audio && npm run render && npm run contact"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

@@ -247,6 +247,7 @@ async function load() {
   assets.ringPaper = tint(ring, C.paper);
   assets.textPaper = tint(text, C.paper);
   assets.ringForest = tint(ring, C.forest);
+  assets.ringOrange = tint(ring, C.orange);
   assets.textForest = tint(text, C.forest);
   assets.contours = buildContours(W, H + 600, 7, 22, 'rgba(241,236,223,0.16)', 1.6);
   assets.trail = buildTrail(560, 730, 258);
@@ -325,9 +326,9 @@ scenes.hook = (t) => {
   enso(assets.ringPaper, cx, cy, 960, 0.06 + 0.94 * easeOutCubic(prog(t, 0, 0.62)));
 
   const lp = sp(t - 0.3, 'ui');
-  maskedText('LE CERCLE PRÉSENTE', 70, 250, { family: TEXT, size: 34, weight: 700, ls: 7, color: C.paper }, lp);
-  maskedText('08.11.26', 1010, 250, { family: TEXT, size: 34, weight: 700, ls: 7, color: C.orange, align: 'right' }, sp(t - 0.38, 'ui'));
-  maskedText('RANDONNÉE · PARC DU BANCO', 70, 1560, { family: TEXT, size: 34, weight: 700, ls: 7, color: C.paper }, sp(t - 0.46, 'ui'));
+  maskedText('LE CERCLE PRÉSENTE', 70, 250, { family: TEXT, size: 40, weight: 700, ls: 7, color: C.paper }, lp);
+  maskedText('08.11.26', 1010, 250, { family: TEXT, size: 40, weight: 700, ls: 7, color: C.orange, align: 'right' }, sp(t - 0.38, 'ui'));
+  maskedText('RANDONNÉE · PARC DU BANCO', 70, 1560, { family: TEXT, size: 40, weight: 700, ls: 7, color: C.paper }, sp(t - 0.46, 'ui'));
 
   droppingDot(cx, cy, 92, t, 1.0, 0.24, C.orange);
   ctx.restore();
@@ -337,11 +338,11 @@ scenes.hook = (t) => {
 scenes.km = (t) => {
   fillBg(C.orange);
   const drift = -t * 22;
-  const s7 = 1750;
+  const s7 = 1480;
   const m7 = measure('7', { size: s7 });
   const rise = (1 - sp(t, 'type')) * 1300;
   const top = 300;
-  const x7 = -40;
+  const x7 = -24;
   text('7', x7, top + m7.asc + rise + drift, { size: s7, color: C.forest });
 
   const colX = x7 + m7.w + 34;
@@ -350,15 +351,23 @@ scenes.km = (t) => {
   const mK = measure('KM', { size: sK });
   maskedText('KM', colX, top + mK.asc + drift * 0.6, { size: sK, color: C.forest }, sp(t - 0.05, 'card'));
 
-  const yA = top + mK.asc + 90 + drift * 0.6;
-  hairline(colX, yA - 40, colX + colW, easeOutCubic(prog(t, 0.2, 0.6)), C.forest, 3);
-  const sF = fitSize('PRIMAIRE', colW, { family: DISPLAY });
-  maskedText('DE FORÊT', colX, yA + sF * 0.74, { size: sF, color: C.paper }, sp(t - 0.25, 'card'));
-  maskedText('PRIMAIRE', colX, yA + sF * 0.74 * 2 + 14, { size: sF, color: C.paper }, sp(t - 0.31, 'card'));
+  const yA = top + mK.asc + 60 + drift * 0.6;
+  hairline(colX, yA - 30, colX + colW, easeOutCubic(prog(t, 0.2, 0.6)), C.forest, 4);
 
-  maskedText('BOUCLE', colX, 1380 + drift * 0.3, { family: TEXT, size: 34, weight: 700, ls: 6, color: C.forest }, sp(t - 0.5, 'ui'));
-  maskedText('DIMANCHE', colX, 1424 + drift * 0.3, { family: TEXT, size: 34, weight: 700, ls: 6, color: C.forest }, sp(t - 0.55, 'ui'));
-  maskedText('MATIN', colX, 1468 + drift * 0.3, { family: TEXT, size: 34, weight: 700, ls: 6, color: C.forest }, sp(t - 0.6, 'ui'));
+  // « DE FORÊT / PRIMAIRE » en typo verticale qui remplit la colonne, sur le temps fort (3,0 s)
+  const gap = 22;
+  const capRatio = measure('E', { size: 100 }).asc / 100;
+  const avail = 1500 + drift * 0.6 - yA;
+  let sV = (colW - gap) / 2 / capRatio;
+  const longest = Math.max(measure('DE FORÊT', { size: sV }).w, measure('PRIMAIRE', { size: sV }).w);
+  if (longest > avail) sV *= avail / longest;
+  const capV = sV * capRatio;
+  ctx.save();
+  ctx.translate(colX, yA + avail);
+  ctx.rotate(-90 * DEG);
+  maskedText('DE FORÊT', 0, capV, { size: sV, color: C.forest }, sp(t - 1.0, 'card'));
+  maskedText('PRIMAIRE', 0, capV * 2 + gap, { size: sV, color: C.forest }, sp(t - 1.06, 'card'));
+  ctx.restore();
 };
 
 // P3 — la carte : courbes de niveau, la boucle se trace.
@@ -400,7 +409,23 @@ scenes.map = (t) => {
   ctx.arc(s0[0], s0[1], 14 * sm, 0, Math.PI * 2);
   ctx.fill();
   hairline(s0[0] + 24, s0[1], s0[0] + 24 + 120, easeOutCubic(prog(t, 0.95, 1.2)), C.paper, 2);
-  maskedText('DÉPART · 08H', s0[0] + 160, s0[1] + 12, { family: TEXT, size: 32, weight: 700, ls: 5, color: C.paper }, sp(t - 1.0, 'ui'));
+  maskedText('DÉPART · 08H', s0[0] + 160, s0[1] + 12, { family: TEXT, size: 38, weight: 700, ls: 5, color: C.paper }, sp(t - 1.0, 'ui'));
+
+  // la boucle se referme : onde depuis le départ
+  const wv = prog(t, 2.3, 2.85);
+  if (wv > 0 && wv < 1) {
+    ctx.strokeStyle = C.orange;
+    ctx.lineWidth = 6 * (1 - wv);
+    ctx.beginPath();
+    ctx.arc(s0[0], s0[1], 20 + 150 * easeOutCubic(wv), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (p >= 1) {
+    ctx.fillStyle = C.orange;
+    ctx.beginPath();
+    ctx.arc(s0[0], s0[1], 20, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // coureur
   if (p > 0 && p < 1) {
@@ -417,12 +442,12 @@ scenes.map = (t) => {
   // typographie hors caméra
   const km = (7 * p).toFixed(1).replace('.', ',');
   text(`${km} KM`, 1010, 290, { size: 96, color: C.orange, align: 'right' });
-  maskedText('ABIDJAN · CÔTE D’IVOIRE', 70, 250, { family: TEXT, size: 32, weight: 700, ls: 6, color: C.paper }, sp(t - 0.1, 'ui'));
-  maskedText('5°23′N  4°03′W', 70, 292, { family: TEXT, size: 32, weight: 500, ls: 6, color: 'rgba(241,236,223,0.6)' }, sp(t - 0.18, 'ui'));
+  maskedText('ABIDJAN · CÔTE D’IVOIRE', 70, 250, { family: TEXT, size: 38, weight: 700, ls: 6, color: C.paper }, sp(t - 0.1, 'ui'));
+  maskedText('5°23′N  4°03′W', 70, 292, { family: TEXT, size: 38, weight: 500, ls: 6, color: 'rgba(241,236,223,0.6)' }, sp(t - 0.18, 'ui'));
 
   const sB = fitSize('BANCO', 880);
-  maskedText('PARC NATIONAL DU', 70, 1222, { family: TEXT, size: 46, weight: 700, ls: 12, color: C.paper }, sp(t - 0.35, 'ui'));
-  maskedText('BANCO', 66, 1250 + measure('BANCO', { size: sB }).asc, { size: sB, color: C.paper }, sp(t - 0.45, 'type'));
+  maskedText('PARC NATIONAL DU', 70, 1222, { family: TEXT, size: 46, weight: 700, ls: 12, color: C.paper }, sp(t - 0.04, 'ui'));
+  maskedText('BANCO', 66, 1250 + measure('BANCO', { size: sB }).asc, { size: sB, color: C.paper }, sp(t, 'word'));
 
   // volet de sortie
   const wp = easeInCubic(prog(t, 2.72, 3.0));
@@ -458,7 +483,7 @@ scenes.burst = (t) => {
     const size = fitSize(b.w, 950);
     wordWithDot(b.w, 62, b.y, size, b.fg, i === 3 ? C.orange : b.fg, sp(lt, 'word'));
     const lab = `0${i + 1} / 04`;
-    text(lab, 70, 250, { family: TEXT, size: 32, weight: 700, ls: 6, color: b.fg });
+    text(lab, 70, 250, { family: TEXT, size: 38, weight: 700, ls: 6, color: b.fg });
     hairline(70, 280, 1010, 1, b.fg, 2);
     ctx.restore();
     return;
@@ -496,7 +521,7 @@ scenes.burst = (t) => {
     y += gap;
   });
   ctx.restore();
-  text('04 / 04', 70, 250, { family: TEXT, size: 32, weight: 700, ls: 6, color: C.paper });
+  text('04 / 04', 70, 250, { family: TEXT, size: 38, weight: 700, ls: 6, color: C.paper });
   hairline(70, 280, 1010, 1, C.paper, 2);
 };
 
@@ -508,8 +533,8 @@ scenes.date = (t) => {
   ctx.translate(dx, 0);
   const slide = (d) => (1 - sp(t - d, 'card')) * 140;
 
-  maskedText('RENDEZ-VOUS', 70, 240, { family: TEXT, size: 34, weight: 700, ls: 8, color: C.forest }, sp(t, 'ui'));
-  maskedText('2026', 1010, 240, { family: TEXT, size: 34, weight: 700, ls: 8, color: C.forest, align: 'right' }, sp(t - 0.04, 'ui'));
+  maskedText('RENDEZ-VOUS', 70, 240, { family: TEXT, size: 40, weight: 700, ls: 8, color: C.forest }, sp(t, 'ui'));
+  maskedText('2026', 1010, 240, { family: TEXT, size: 40, weight: 700, ls: 8, color: C.forest, align: 'right' }, sp(t - 0.04, 'ui'));
   hairline(70, 272, 1010, easeOutExpo(prog(t, 0, 0.5)), C.forest, 3);
 
   const sD = fitSize('DIMANCHE', 940);
@@ -532,6 +557,19 @@ scenes.date = (t) => {
   ctx.translate(slide(0.2), 0);
   maskedText('NOVEMBRE', 70, yN, { size: sN, color: C.orange }, sp(t - 0.2, 'card'));
   ctx.restore();
+
+  // on entoure la date au pinceau, comme sur un calendrier (11,5 s)
+  const ep = easeOutCubic(prog(t, 1.5, 1.95));
+  if (ep > 0) {
+    const ecx = 64 + m08.w / 2, ecy = y08 - m08.asc / 2;
+    ctx.save();
+    ctx.translate(ecx, ecy);
+    ctx.rotate(-6 * DEG);
+    ctx.scale(1, (m08.asc + 90) / 1090);
+    ctx.translate(-ecx, -ecy);
+    enso(assets.ringOrange, ecx, ecy, 1090, ep);
+    ctx.restore();
+  }
 
   const yL = yN + 36;
   hairline(70, yL, 1010, easeOutExpo(prog(t, 0.35, 0.85)), C.forest, 3);
@@ -593,11 +631,12 @@ scenes.ticket = (t) => {
   const rot = lerp(-9, 0, spring(t, 1.3, 0.5)) * DEG;
   const tw = 840, mainH = 820, stubH = 300, notch = 34;
   const x0 = 540 - tw / 2;
-  const y0 = 320 + (1 - enter) * 1500;
+  const y0 = 320 + (1 - enter) * 1500 + 150 * sp(t - 1.55, 'card');
 
   // recul du ticket au détachement de la souche
   const tear = 1.5;
-  const recoil = t > tear ? -18 * Math.exp(-(t - tear) * 6) * Math.sin((t - tear) * 18) : 0;
+  const thud = shake(t - 2.0, 7);
+  const recoil = thud + (t > tear ? -18 * Math.exp(-(t - tear) * 6) * Math.sin((t - tear) * 18) : 0);
 
   ctx.save();
   ctx.translate(540, y0 + mainH / 2);
@@ -620,21 +659,30 @@ scenes.ticket = (t) => {
   ctx.fill();
 
   const ix = x0 + 60;
-  text('PARTICIPATION', ix, y0 + 100, { family: TEXT, size: 34, weight: 700, ls: 8, color: C.forest });
-  const k = 120 / (LOGO.ringR * 2);
-  ctx.drawImage(assets.ringForest, x0 + tw - 60 - 120 - (LOGO.ringC[0] - LOGO.ringR) * k, y0 + 44 - (LOGO.ringC[1] - LOGO.ringR) * k, 1280 * k, 1280 * k);
-  ctx.fillStyle = C.orange;
-  ctx.beginPath();
-  ctx.arc(x0 + tw - 120, y0 + 104, 13, 0, Math.PI * 2);
-  ctx.fill();
-  hairline(ix, y0 + 190, x0 + tw - 60, easeOutExpo(prog(t, 0.3, 0.8)), C.forest, 3);
+  text('PARTICIPATION', ix, y0 + 100, { family: TEXT, size: 40, weight: 700, ls: 8, color: C.forest });
+  hairline(ix, y0 + 190, x0 + tw - 60, easeOutExpo(prog(t, 0.1, 0.6)), C.forest, 3);
 
   const sP = fitSize('5 000', tw - 120);
   const mP = measure('5 000', { size: sP });
   const yP = y0 + 230 + mP.asc;
-  maskedText('5 000', ix - 6, yP, { size: sP, color: C.forest }, sp(t - 0.35, 'type'));
-  maskedText('FCFA', ix, yP + 190, { size: 170, color: C.orange }, sp(t - 0.45, 'card'));
-  maskedText('PAR PERSONNE', x0 + tw - 60, yP + 190, { family: TEXT, size: 36, weight: 700, ls: 6, color: C.forest, align: 'right' }, sp(t - 0.55, 'ui'));
+  maskedText('5 000', ix - 6, yP, { size: sP, color: C.forest }, sp(t - 0.12, 'type'));
+  maskedText('FCFA', ix, yP + 190, { size: 170, color: C.orange }, sp(t - 0.2, 'card'));
+  // tampon (15,0 s)
+  const stT = 2.0;
+  if (t > stT - 0.09) {
+    const a = t < stT ? lerp(2.4, 1, easeInCubic(prog(t, stT - 0.09, stT))) : 1 + 0.07 * Math.exp(-(t - stT) * 9) * Math.cos((t - stT) * 30);
+    const scx = x0 + tw - 150, scy = y0 + 110;
+    ctx.save();
+    ctx.translate(scx, scy);
+    ctx.rotate(-14 * DEG);
+    ctx.scale(a, a);
+    ctx.globalCompositeOperation = 'multiply';
+    enso(assets.ringOrange, 0, 0, 230, 1);
+    text('08.11', 0, 22, { size: 74, color: C.orange, align: 'center' });
+    text('BANCO', 0, 64, { family: TEXT, size: 26, weight: 700, ls: 6, color: C.orange, align: 'center' });
+    ctx.restore();
+  }
+  maskedText('PAR PERSONNE', x0 + tw - 60, yP + 190, { family: TEXT, size: 36, weight: 700, ls: 6, color: C.forest, align: 'right' }, sp(t - 0.28, 'ui'));
   ctx.restore();
 
   // souche
@@ -661,7 +709,7 @@ scenes.ticket = (t) => {
   ctx.fillStyle = C.forest;
   for (let px = x0 + notch + 20; px < x0 + tw - notch - 10; px += 26) ctx.fillRect(px, sy0 - 2, 12, 4);
   text('RANDONNÉE DU CERCLE', ix, sy0 + 110, { size: 64, color: C.forest });
-  text('DIM. 08 NOV · 08H00 · BANCO', ix, sy0 + 168, { family: TEXT, size: 32, weight: 700, ls: 5, color: C.forest });
+  text('DIM. 08 NOV · 08H00 · BANCO', ix, sy0 + 168, { family: TEXT, size: 38, weight: 700, ls: 5, color: C.forest });
   barcode(ix, sy0 + 200, 420, 56, C.forest);
   text('7 KM', x0 + tw - 60, sy0 + 256, { size: 90, color: C.orange, align: 'right' });
   ctx.restore();
@@ -673,7 +721,7 @@ scenes.ticket = (t) => {
 // P7 — appel à l'action.
 scenes.cta = (t) => {
   fillBg(C.forest);
-  const lc = [540, 560];
+  const lc = [540, 520];
   const d = 600;
   const k = d / (LOGO.ringR * 2);
   enso(assets.ringPaper, lc[0], lc[1], d, easeOutCubic(prog(t, 0, 0.6)));
@@ -692,7 +740,7 @@ scenes.cta = (t) => {
   droppingDot(dc[0], dc[1], LOGO.dotR * k, t, 1.0, 0.24, C.orange);
 
   const s1 = 150;
-  const y1 = 1000;
+  const y1 = 950;
   maskedText('ENTRE DANS', 540, y1, { size: s1, color: C.paper, align: 'center' }, sp(t - 1.0, 'card'));
   const m2 = measure('LE CERCLE.', { size: s1 });
   const p2 = sp(t - 1.15, 'card');
@@ -700,7 +748,7 @@ scenes.cta = (t) => {
   maskedText('LE CERCLE', x2, y1 + 160, { size: s1, color: C.paper }, p2);
   maskedText('.', x2 + measure('LE CERCLE', { size: s1 }).w, y1 + 160, { size: s1, color: C.orange }, p2);
 
-  const yW = 1270;
+  const yW = 1220;
   hairline(70, yW - 70, 1010, easeOutExpo(prog(t, 1.5, 2.0)), 'rgba(241,236,223,0.35)', 2);
   const lp = sp(t - 1.6, 'ui');
   // bulle de discussion
@@ -723,7 +771,8 @@ scenes.cta = (t) => {
   maskedText(num, 70, yW + 40 + mNum.asc, { size: sNum, color: C.paper }, sp(t - 1.75, 'card'));
   const yI = yW + 40 + mNum.asc + 40;
   hairline(70, yI, 1010, easeOutExpo(prog(t, 1.85, 2.3)), 'rgba(241,236,223,0.35)', 2);
-  maskedText('DIM. 08 NOV · 08H00 · PARC DU BANCO · 5 000 FCFA', 70, yI + 56, { family: TEXT, size: 33, weight: 700, ls: 3, color: C.paper }, sp(t - 1.9, 'ui'));
+  maskedText('DIM. 08 NOV · DÉPART 08H00', 70, yI + 58, { family: TEXT, size: 40, weight: 700, ls: 4, color: C.paper }, sp(t - 1.9, 'ui'));
+  maskedText('PARC DU BANCO · 5 000 FCFA', 70, yI + 110, { family: TEXT, size: 40, weight: 700, ls: 4, color: C.paper }, sp(t - 1.96, 'ui'));
 };
 
 // ---------------------------------------------------------------- horloge maîtresse
