@@ -13,6 +13,18 @@ const C = {
   orange: '#FF5B1F',
   ink: '#0A0A0A',
 };
+// Effets optionnels (catalogue de démo). Désactivés par défaut : la vidéo finale
+// n'active que ceux qui ont été validés.
+export const FX = {
+  footprints: false,  // A1 empreintes de pas sur la boucle
+  pathText: false,    // A5 texte qui suit le chemin
+  compass: false,     // A10 boussole
+  walkLetters: false, // A3 « MARCHE. » qui marche
+  breathe: false,     // A4 « RESPIRE. » qui respire
+  hikers: false,      // A8 groupe de marcheurs
+  typeNumber: false,  // A7 numéro tapé
+};
+
 const DISPLAY = 'Anton';
 const TEXT = '"Archivo Narrow"';
 
@@ -304,6 +316,106 @@ function contours(offset, alpha = 1) {
   ctx.restore();
 }
 
+// Point du tracé à l'abscisse curviligne s : [x, y, angle de la tangente].
+function trailAt(s) {
+  const tr = assets.trail;
+  s = clamp(s, 0, tr.total);
+  let lo = 0, hi = tr.len.length - 1;
+  while (hi - lo > 1) {
+    const m = (lo + hi) >> 1;
+    tr.len[m] < s ? (lo = m) : (hi = m);
+  }
+  const a = tr.pts[lo], b = tr.pts[hi];
+  const k = (s - tr.len[lo]) / (tr.len[hi] - tr.len[lo] || 1);
+  return [lerp(a[0], b[0], k), lerp(a[1], b[1], k), Math.atan2(b[1] - a[1], b[0] - a[0])];
+}
+
+// A1 — empreintes alternées gauche / droite le long du tracé.
+function footprints(L, t) {
+  const step = 36;
+  for (let s = 0, n = 0; s <= L; s += step, n++) {
+    const [x, y, a] = trailAt(s);
+    const side = n % 2 ? 1 : -1;
+    const age = (L - s) / 260;
+    const pop = clamp(age * 4);
+    const px = x + Math.cos(a + Math.PI / 2) * 11 * side;
+    const py = y + Math.sin(a + Math.PI / 2) * 11 * side;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(a + side * 0.12);
+    ctx.scale(pop, pop);
+    ctx.fillStyle = C.orange;
+    ctx.beginPath();
+    ctx.ellipse(4, 0, 11, 6.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(-12, 0, 5.5, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  void t;
+}
+
+// A5 — texte qui court le long du chemin, à l'extérieur de la boucle.
+function pathText(L, t) {
+  const str = 'PARC NATIONAL DU BANCO · 7 KM · DIMANCHE 08H · ';
+  ctx.font = font(TEXT, 30, 700);
+  ctx.fillStyle = C.paper;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  let s = (t * 70) % 40;
+  let i = 0;
+  while (s < L - 10) {
+    const ch = str[i % str.length];
+    const w = ctx.measureText(ch).width + 4;
+    const [x, y, a] = trailAt(s + w / 2);
+    ctx.save();
+    ctx.translate(x + Math.cos(a - Math.PI / 2) * 30, y + Math.sin(a - Math.PI / 2) * 30);
+    ctx.rotate(a);
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+    s += w;
+    i++;
+  }
+}
+
+// A10 — boussole : l'aiguille oscille (ressort peu amorti) puis se fige vers le Banco.
+function compass(cx, cy, t) {
+  const sc = sp(t - 0.2, 'card');
+  if (sc <= 0) return;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(sc, sc);
+  ctx.strokeStyle = C.paper;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, 70, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let k = 0; k < 12; k++) {
+    const a = (k * 30) * DEG;
+    const r0 = k % 3 === 0 ? 54 : 61;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0);
+    ctx.lineTo(Math.cos(a) * 67, Math.sin(a) * 67);
+    ctx.stroke();
+  }
+  text('N', 0, -80, { family: TEXT, size: 28, weight: 700, color: C.paper, align: 'center' });
+  const target = -38 * DEG, from = 150 * DEG;
+  const ang = lerp(from, target, spring(t - 0.35, 0.9, 0.18));
+  ctx.rotate(ang + Math.PI / 2);
+  ctx.fillStyle = C.orange;
+  ctx.beginPath();
+  ctx.moveTo(0, -52); ctx.lineTo(10, 0); ctx.lineTo(-10, 0); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = C.paper;
+  ctx.beginPath();
+  ctx.moveTo(0, 52); ctx.lineTo(10, 0); ctx.lineTo(-10, 0); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = C.forest;
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------- plans
 
 const scenes = {};
@@ -383,8 +495,8 @@ scenes.map = (t) => {
   const tr = assets.trail;
   const p = easeInOutCubic(prog(t, 0.1, 2.3));
   const L = p * tr.total;
-  ctx.strokeStyle = C.orange;
-  ctx.lineWidth = 10;
+  ctx.strokeStyle = FX.footprints ? 'rgba(255,91,31,0.22)' : C.orange;
+  ctx.lineWidth = FX.footprints ? 4 : 10;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
@@ -400,6 +512,8 @@ scenes.map = (t) => {
     i === 0 ? ctx.moveTo(head[0], head[1]) : ctx.lineTo(head[0], head[1]);
   }
   if (p > 0) ctx.stroke();
+  if (FX.footprints) footprints(L, t);
+  if (FX.pathText) pathText(L, t);
 
   // départ
   const s0 = tr.pts[0];
@@ -428,7 +542,7 @@ scenes.map = (t) => {
   }
 
   // coureur
-  if (p > 0 && p < 1) {
+  if (p > 0 && p < 1 && !FX.footprints) {
     ctx.fillStyle = C.orange;
     ctx.strokeStyle = C.forest;
     ctx.lineWidth = 6;
@@ -438,6 +552,7 @@ scenes.map = (t) => {
     ctx.stroke();
   }
   ctx.restore();
+  if (FX.compass) compass(915, 1080, t);
 
   // typographie hors caméra
   const km = (7 * p).toFixed(1).replace('.', ',');
@@ -472,6 +587,77 @@ function wordWithDot(word, x, y, size, color, dotColor, p) {
   maskedText('.', x + m.w, y, { size, color: dotColor }, p);
 }
 
+// A3 — chaque lettre entre en sautillant, puis « marche » sur place (balancement alterné).
+function walkingWord(word, x, y, size, color, lt) {
+  let cx = x;
+  [...word].forEach((ch, j) => {
+    const w = measure(ch, { size }).w;
+    const d = j * 0.035;
+    const e = sp(lt - d, 'word');
+    const hop = -Math.sin(Math.PI * clamp((lt - d) / 0.16)) * 70;
+    const bob = Math.sin(lt * 4 * Math.PI + j * Math.PI) * 5 * clamp((lt - d - 0.16) * 6);
+    const tilt = Math.sin(lt * 4 * Math.PI + j * Math.PI) * 1.2 * DEG;
+    if (lt - d > 0) {
+      ctx.save();
+      ctx.translate(cx + w / 2 - (1 - e) * 220, y + hop + bob);
+      ctx.rotate(tilt);
+      text(ch, -w / 2, 0, { size, color });
+      ctx.restore();
+    }
+    cx += w;
+  });
+}
+
+// A8 — pictogramme de randonneur (style signalétique de sentier), cycle de marche.
+function hiker(x, y, h, phase, color, stick) {
+  const k = h / 160;
+  const sw = Math.sin(phase);
+  ctx.save();
+  ctx.translate(x, y + Math.abs(Math.cos(phase)) * -4 * k);
+  ctx.scale(k, k);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineCap = 'round';
+  // jambes
+  ctx.lineWidth = 15;
+  for (const sgn of [1, -1]) {
+    const a = sgn * sw * 28 * DEG;
+    ctx.beginPath();
+    ctx.moveTo(0, -62);
+    ctx.lineTo(Math.sin(a) * 30, -62 + Math.cos(a) * 30);
+    ctx.lineTo(Math.sin(a * 0.6) * 30 + Math.sin(a) * 30, -2);
+    ctx.stroke();
+  }
+  // sac à dos
+  ctx.fillRect(-26, -128, 18, 46);
+  // torse
+  ctx.lineWidth = 22;
+  ctx.beginPath();
+  ctx.moveTo(4, -122);
+  ctx.lineTo(0, -64);
+  ctx.stroke();
+  // bras
+  ctx.lineWidth = 11;
+  const aa = -sw * 30 * DEG;
+  ctx.beginPath();
+  ctx.moveTo(4, -114);
+  ctx.lineTo(4 + Math.sin(aa) * 40, -114 + Math.cos(aa) * 40);
+  ctx.stroke();
+  if (stick) {
+    ctx.lineWidth = 5;
+    const hx = 4 + Math.sin(aa) * 40, hy = -114 + Math.cos(aa) * 40;
+    ctx.beginPath();
+    ctx.moveTo(hx, hy - 10);
+    ctx.lineTo(hx + 22, 0);
+    ctx.stroke();
+  }
+  // tête
+  ctx.beginPath();
+  ctx.arc(8, -146, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 scenes.burst = (t) => {
   if (t < 2.0) {
     const i = Math.min(3, Math.floor(t / 0.5));
@@ -481,7 +667,21 @@ scenes.burst = (t) => {
     ctx.save();
     ctx.translate(shake(lt, 9), shake(lt - 0.01, 7));
     const size = fitSize(b.w, 950);
-    wordWithDot(b.w, 62, b.y, size, b.fg, i === 3 ? C.orange : b.fg, sp(lt, 'word'));
+    if (FX.walkLetters && i === 0) {
+      walkingWord(b.w, 62, b.y, size, b.fg, lt);
+    } else if (FX.breathe && i === 1) {
+      // A4 — inspiration / expiration
+      const br = Math.sin(Math.PI * clamp((lt - 0.06) / 0.42));
+      const cx = 62 + 475, cy = b.y - size * 0.36;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1 + 0.04 * br, 1 + 0.24 * br);
+      ctx.translate(-cx, -cy);
+      wordWithDot(b.w, 62, b.y, size, b.fg, b.fg, sp(lt, 'word'));
+      ctx.restore();
+    } else {
+      wordWithDot(b.w, 62, b.y, size, b.fg, i === 3 ? C.orange : b.fg, sp(lt, 'word'));
+    }
     const lab = `0${i + 1} / 04`;
     text(lab, 70, 250, { family: TEXT, size: 38, weight: 700, ls: 6, color: b.fg });
     hairline(70, 280, 1010, 1, b.fg, 2);
@@ -521,6 +721,14 @@ scenes.burst = (t) => {
     y += gap;
   });
   ctx.restore();
+  if (FX.hikers) {
+    const gy = 1500;
+    hairline(0, gy + 2, W, easeOutExpo(prog(lt, 0, 0.4)), 'rgba(241,236,223,0.35)', 2);
+    for (let k = 0; k < 6; k++) {
+      const x = -140 + k * 190 + lt * 150 - (1 - sp(lt - k * 0.04, 'card')) * 260;
+      hiker(x, gy, 150 + (k % 2) * 12, lt * 2 * Math.PI * 1.6 + k * 1.7, k === 3 ? C.orange : C.paper, k % 2 === 0);
+    }
+  }
   text('04 / 04', 70, 250, { family: TEXT, size: 38, weight: 700, ls: 6, color: C.paper });
   hairline(70, 280, 1010, 1, C.paper, 2);
 };
@@ -768,11 +976,95 @@ scenes.cta = (t) => {
   const num = '+225 07 08 21 42 54';
   const sNum = fitSize(num, 940);
   const mNum = measure(num, { size: sNum });
-  maskedText(num, 70, yW + 40 + mNum.asc, { size: sNum, color: C.paper }, sp(t - 1.75, 'card'));
+  if (FX.typeNumber) {
+    const n = clamp(Math.floor((t - 1.7) / 0.05) + 1, 0, num.length);
+    const shown = num.slice(0, n);
+    const yN = yW + 40 + mNum.asc;
+    text(shown, 70, yN, { size: sNum, color: C.paper });
+    const typing = n < num.length;
+    if (t > 1.6 && (typing || Math.floor(t * 3) % 2 === 0) && t < 3.2) {
+      const cx = 70 + measure(shown, { size: sNum }).w + 10;
+      ctx.fillStyle = C.orange;
+      ctx.fillRect(cx, yN - mNum.asc, 8, mNum.asc);
+    }
+  } else {
+    maskedText(num, 70, yW + 40 + mNum.asc, { size: sNum, color: C.paper }, sp(t - 1.75, 'card'));
+  }
   const yI = yW + 40 + mNum.asc + 40;
   hairline(70, yI, 1010, easeOutExpo(prog(t, 1.85, 2.3)), 'rgba(241,236,223,0.35)', 2);
   maskedText('DIM. 08 NOV · DÉPART 08H00', 70, yI + 58, { family: TEXT, size: 40, weight: 700, ls: 4, color: C.paper }, sp(t - 1.9, 'ui'));
   maskedText('PARC DU BANCO · 5 000 FCFA', 70, yI + 110, { family: TEXT, size: 40, weight: 700, ls: 4, color: C.paper }, sp(t - 1.96, 'ui'));
+};
+
+// A6 — discussion WhatsApp : question reçue, réponse envoyée, coches qui passent à l'orange.
+function bubble(x, y, w, h, color, tailRight, p) {
+  if (p <= 0) return;
+  const ox = tailRight ? x + w : x, oy = y + h;
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(p, p);
+  ctx.translate(-ox, -oy);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 34);
+  ctx.moveTo(tailRight ? x + w - 30 : x + 30, y + h);
+  ctx.lineTo(tailRight ? x + w + 18 : x - 18, y + h + 4);
+  ctx.lineTo(tailRight ? x + w - 4 : x + 4, y + h - 34);
+  ctx.fill();
+  ctx.restore();
+}
+
+function ticks(x, y, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const dx of [0, 16]) {
+    ctx.beginPath();
+    ctx.moveTo(x + dx, y);
+    ctx.lineTo(x + dx + 9, y + 9);
+    ctx.lineTo(x + dx + 26, y - 10);
+    ctx.stroke();
+  }
+}
+
+scenes.chat = (t) => {
+  fillBg(C.forest);
+  contours(200 + t * 25, 0.45);
+  maskedText('INSCRIPTIONS SUR WHATSAPP', 70, 250, { family: TEXT, size: 40, weight: 700, ls: 6, color: C.orange }, sp(t, 'ui'));
+  hairline(70, 282, 1010, easeOutExpo(prog(t, 0, 0.5)), 'rgba(241,236,223,0.35)', 2);
+
+  const f = { family: TEXT, size: 54, weight: 700 };
+  // reçu
+  const p1 = sp(t - 0.1, 'card');
+  bubble(70, 640, 760, 230, C.canopy, false, p1);
+  if (p1 > 0.6) {
+    text('Dimanche 8h au Banco,', 120, 735, { ...f, color: C.paper });
+    text('tu viens ?', 120, 805, { ...f, color: C.paper });
+    text('07:58', 790, 850, { family: TEXT, size: 28, weight: 500, color: 'rgba(241,236,223,0.55)', align: 'right' });
+  }
+  // en train d'écrire
+  if (t > 0.65 && t < 1.15) {
+    bubble(820, 960, 190, 110, C.paper, true, sp(t - 0.65, 'ui'));
+    for (let k = 0; k < 3; k++) {
+      const yy = 1015 - Math.max(0, Math.sin((t * 10 - k * 0.8) * Math.PI / 2)) * 12;
+      ctx.fillStyle = C.forest;
+      ctx.beginPath();
+      ctx.arc(875 + k * 40, yy, 11, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // envoyé
+  const p2 = sp(t - 1.15, 'card');
+  bubble(330, 960, 680, 200, C.orange, true, p2);
+  if (p2 > 0.6) {
+    text('Je m’inscris !', 380, 1065, { family: DISPLAY, size: 92, color: C.forest });
+    text('07:59', 900, 1130, { family: TEXT, size: 28, weight: 500, color: C.forest, align: 'right' });
+    ticks(918, 1120, t > 1.8 ? C.paper : 'rgba(11,35,24,0.5)');
+  }
+  // numéro
+  const p3 = sp(t - 1.9, 'card');
+  maskedText('+225 07 08 21 42 54', 70, 1420, { size: fitSize('+225 07 08 21 42 54', 940), color: C.paper }, p3);
 };
 
 // ---------------------------------------------------------------- horloge maîtresse
@@ -800,6 +1092,12 @@ function seek(t) {
   ctx.restore();
   drawGrain(t);
 }
+
+export {
+  ctx, canvas, W, H, C, DISPLAY, TEXT, DEG, LOGO, assets, scenes,
+  clamp, lerp, prog, easeOutCubic, easeInCubic, easeInOutCubic, easeOutExpo,
+  spring, sp, rng, shake, text, measure, fitSize, maskedText, fillBg, hairline, enso, drawGrain,
+};
 
 window.ready = load().then(() => {
   window.seek = seek;

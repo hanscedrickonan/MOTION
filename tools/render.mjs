@@ -3,6 +3,8 @@
 //   node tools/render.mjs video  [out/final.mp4]      vidéo complète + bande-son
 //   node tools/render.mjs stills out/stills 1.0 2.5   images fixes aux instants donnés
 //
+// PAGE=src/demos.html rend une autre page (catalogue de démo) ; AUDIO=none désactive le son.
+//
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,9 +36,10 @@ async function open() {
   const browser = await chromium.launch({ args: ['--font-render-hinting=none', '--disable-lcd-text'] });
   const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
   page.on('pageerror', (e) => console.error('page error:', e));
-  await page.goto(`http://127.0.0.1:${server.address().port}/src/index.html?render`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/${process.env.PAGE || 'src/index.html'}?render`);
   await page.evaluate(() => window.ready);
   const timeline = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/timeline.json'), 'utf8'));
+  timeline.duration = await page.evaluate(() => window.duration);
   const frame = async (t) => {
     const url = await page.evaluate((t) => {
       window.seek(t);
@@ -68,12 +71,12 @@ if (mode === 'stills') {
   }
 } else {
   const out = rest[0] || path.join(ROOT, 'out/final.mp4');
-  const audio = path.join(ROOT, 'out/soundtrack.wav');
+  const audio = process.env.AUDIO === 'none' ? '' : process.env.AUDIO || path.join(ROOT, 'out/soundtrack.wav');
   fs.mkdirSync(path.dirname(out), { recursive: true });
   const { fps, duration } = r.timeline;
   const n = Math.round(duration * fps);
   const args = ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-'];
-  if (fs.existsSync(audio)) args.push('-i', audio, '-c:a', 'aac', '-b:a', '192k', '-shortest');
+  if (audio && fs.existsSync(audio)) args.push('-i', audio, '-c:a', 'aac', '-b:a', '192k', '-shortest');
   args.push('-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-profile:v', 'high', '-level', '4.2',
     '-pix_fmt', 'yuv420p', '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709',
     '-movflags', '+faststart', out);
