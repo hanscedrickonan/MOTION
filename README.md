@@ -78,6 +78,8 @@ Les textes se trouvent dans `src/main.js` (une fonction par plan : `scenes.hook`
 | Date → discussion | A6 nouveau plan « Je m'inscris ! » (13,0 → 15,5 s) |
 | Ticket → signature | T1 le tampon devient l'ensō du logo |
 
+**Photo de fond** : `refs/photos/banco_b.jpg` (sentier du Banco) sur les plans verts, traitée en bichromie verte avec un léger flou et un lent travelling avant. Les sources ne font que 450 px : un original en haute définition rendrait le fond plus net. Pour tester l'autre photo ou revenir à l'aplat, ouvrez la page avec `?photo=a` ou `?photo=none` (au rendu : `PAGE="src/index.html?photo=none"`).
+
 Les animations sont activées par `FX` en tête de `src/main.js`. Les transitions sont dans `TRANSITIONS`, juste avant `seek()`.
 
 Passe 4 (intégration) : pinceau qui inclinait la date, lettres de « MARCHE. » qui se chevauchaient, bulles trop petites, marcheurs collés au texte, tampon décalé de 80 px au raccord. Tout est corrigé.

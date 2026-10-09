@@ -24,7 +24,8 @@ export const FX = {
   hikers: true,       // A8 groupe de marcheurs
   typeNumber: false,  // A7 numéro tapé
   ctaRingDrawn: true, // l'ensō final est déjà là (il arrive par le raccord T1)
-  photo: new URLSearchParams(location.search).get('photo'), // 'a' | 'b' | null : photo du Banco en fond
+  // photo du Banco en fond des plans verts : 'b' (sentier, retenue), 'a' (randonneurs) ou 'none'
+  photo: ((p) => (p === 'none' ? null : p || 'b'))(new URLSearchParams(location.search).get('photo')),
 };
 
 let nowT = 0; // temps global courant (pour le lent travelling de la photo de fond)
