@@ -36,7 +36,8 @@ async function open() {
   const browser = await chromium.launch({ args: ['--font-render-hinting=none', '--disable-lcd-text'] });
   const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
   page.on('pageerror', (e) => console.error('page error:', e));
-  await page.goto(`http://127.0.0.1:${server.address().port}/${process.env.PAGE || 'src/index.html'}?render`);
+  const pg = process.env.PAGE || 'src/index.html';
+  await page.goto(`http://127.0.0.1:${server.address().port}/${pg}${pg.includes('?') ? '&' : '?'}render`);
   await page.evaluate(() => window.ready);
   const timeline = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/timeline.json'), 'utf8'));
   timeline.duration = await page.evaluate(() => window.duration);

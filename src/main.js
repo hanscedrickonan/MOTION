@@ -24,7 +24,10 @@ export const FX = {
   hikers: true,       // A8 groupe de marcheurs
   typeNumber: false,  // A7 numéro tapé
   ctaRingDrawn: true, // l'ensō final est déjà là (il arrive par le raccord T1)
+  photo: new URLSearchParams(location.search).get('photo'), // 'a' | 'b' | null : photo du Banco en fond
 };
+
+let nowT = 0; // temps global courant (pour le lent travelling de la photo de fond)
 
 const DISPLAY = 'Anton';
 const TEXT = '"Archivo Narrow"';
@@ -121,6 +124,44 @@ function maskedText(str, x, y, opts, p) {
 function fillBg(color) {
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, W, H);
+  if (color === C.forest && FX.photo && assets.photos) photoBg(assets.photos[FX.photo]);
+}
+
+// Photo du Banco traitée en ambiance : bichromie verte, flou léger, assombrie pour la lisibilité.
+// Les sources font 450 px : on assume une image douce plutôt qu'une photo nette agrandie.
+const PHOTO_K = 1.15;
+function buildPhoto(img, focusX) {
+  const c = document.createElement('canvas');
+  c.width = Math.round(W * PHOTO_K);
+  c.height = Math.round(H * PHOTO_K);
+  const g = c.getContext('2d');
+  const sh = img.height, sw = (sh * c.width) / c.height;
+  const sx = clamp(img.width * focusX - sw / 2, 0, img.width - sw);
+  g.filter = 'grayscale(1) contrast(1.3) brightness(1.05) blur(4px)';
+  g.drawImage(img, sx, 0, sw, sh, -20, -20, c.width + 40, c.height + 40);
+  g.filter = 'none';
+  g.globalCompositeOperation = 'multiply';
+  g.fillStyle = '#3C8A62';
+  g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = 'source-over';
+  g.fillStyle = 'rgba(11,35,24,0.5)';
+  g.fillRect(0, 0, c.width, c.height);
+  const grad = g.createLinearGradient(0, 0, 0, c.height);
+  grad.addColorStop(0, 'rgba(11,35,24,0.55)');
+  grad.addColorStop(0.35, 'rgba(11,35,24,0)');
+  grad.addColorStop(0.65, 'rgba(11,35,24,0)');
+  grad.addColorStop(1, 'rgba(11,35,24,0.7)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+
+function photoBg(ph) {
+  // lent travelling avant sur toute la durée : on « marche » dans la forêt
+  const u = nowT / (assets.timeline?.duration || 1);
+  const sc = lerp(1 / PHOTO_K, 1, u) * PHOTO_K;
+  const w = (ph.width * sc) / PHOTO_K, h = (ph.height * sc) / PHOTO_K;
+  ctx.drawImage(ph, (W - w) / 2, (H - h) / 2, w, h);
 }
 
 function hairline(x0, y, x1, p, color, w = 2) {
@@ -266,6 +307,10 @@ async function load() {
   assets.trail = buildTrail(560, 730, 258);
   assets.grain = grainTiles();
   assets.timeline = await (await fetch('./timeline.json')).json();
+  if (FX.photo) {
+    const [pa, pb] = await Promise.all(['a', 'b'].map((n) => loadImage(`../assets/photos/banco_${n}.jpg`)));
+    assets.photos = { a: buildPhoto(pa, 0.47), b: buildPhoto(pb, 0.45) };
+  }
 }
 
 // ---------------------------------------------------------------- éléments partagés
@@ -311,7 +356,7 @@ function droppingDot(cx, cy, r, t, tLand, fallDur, color) {
 
 function contours(offset, alpha = 1) {
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = alpha * (FX.photo ? 0.4 : 1);
   const y = -(offset % 600);
   ctx.drawImage(assets.contours, 0, y);
   ctx.restore();
@@ -1243,6 +1288,7 @@ const TRANSITIONS = [
 function seek(t) {
   const tl = assets.timeline;
   t = clamp(t, 0, tl.duration - 1e-6);
+  nowT = t;
   const s = tl.scenes.find((x) => t >= x.start && t < x.end) || tl.scenes[tl.scenes.length - 1];
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
