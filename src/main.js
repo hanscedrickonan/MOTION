@@ -16,13 +16,14 @@ const C = {
 // Effets optionnels (catalogue de démo). Désactivés par défaut : la vidéo finale
 // n'active que ceux qui ont été validés.
 export const FX = {
-  footprints: false,  // A1 empreintes de pas sur la boucle
+  footprints: true,   // A1 empreintes de pas sur la boucle
   pathText: false,    // A5 texte qui suit le chemin
   compass: false,     // A10 boussole
-  walkLetters: false, // A3 « MARCHE. » qui marche
-  breathe: false,     // A4 « RESPIRE. » qui respire
-  hikers: false,      // A8 groupe de marcheurs
+  walkLetters: true,  // A3 « MARCHE. » qui marche
+  breathe: true,      // A4 « RESPIRE. » qui respire
+  hikers: true,       // A8 groupe de marcheurs
   typeNumber: false,  // A7 numéro tapé
+  ctaRingDrawn: true, // l'ensō final est déjà là (il arrive par le raccord T1)
 };
 
 const DISPLAY = 'Anton';
@@ -564,12 +565,6 @@ scenes.map = (t) => {
   maskedText('PARC NATIONAL DU', 70, 1222, { family: TEXT, size: 46, weight: 700, ls: 12, color: C.paper }, sp(t - 0.04, 'ui'));
   maskedText('BANCO', 66, 1250 + measure('BANCO', { size: sB }).asc, { size: sB, color: C.paper }, sp(t, 'word'));
 
-  // volet de sortie
-  const wp = easeInCubic(prog(t, 2.72, 3.0));
-  if (wp > 0) {
-    ctx.fillStyle = C.paper;
-    ctx.fillRect(0, H * (1 - wp), W, H * wp);
-  }
 };
 
 // P4 — rafale : un mot par temps, coupes sèches.
@@ -594,12 +589,12 @@ function walkingWord(word, x, y, size, color, lt) {
     const w = measure(ch, { size }).w;
     const d = j * 0.035;
     const e = sp(lt - d, 'word');
-    const hop = -Math.sin(Math.PI * clamp((lt - d) / 0.16)) * 70;
+    const hop = -Math.sin(Math.PI * clamp((lt - d) / 0.16)) * 45;
     const bob = Math.sin(lt * 4 * Math.PI + j * Math.PI) * 5 * clamp((lt - d - 0.16) * 6);
     const tilt = Math.sin(lt * 4 * Math.PI + j * Math.PI) * 1.2 * DEG;
     if (lt - d > 0) {
       ctx.save();
-      ctx.translate(cx + w / 2 - (1 - e) * 220, y + hop + bob);
+      ctx.translate(cx + w / 2, y + hop + bob + (1 - e) * 260);
       ctx.rotate(tilt);
       text(ch, -w / 2, 0, { size, color });
       ctx.restore();
@@ -698,7 +693,7 @@ scenes.burst = (t) => {
   const ascs = lines.map((w, k) => measure(w, { size: sizes[k] }).asc);
   const gap = 26;
   const total = ascs.reduce((a, b) => a + b, 0) + gap * 3;
-  let y = 900 - total / 2;
+  let y = (FX.hikers ? 800 : 900) - total / 2;
   lines.forEach((w, k) => {
     y += ascs[k];
     const p = sp(lt - k * 0.05, 'word');
@@ -932,10 +927,10 @@ scenes.cta = (t) => {
   const lc = [540, 520];
   const d = 600;
   const k = d / (LOGO.ringR * 2);
-  enso(assets.ringPaper, lc[0], lc[1], d, easeOutCubic(prog(t, 0, 0.6)));
+  enso(assets.ringPaper, lc[0], lc[1], d, FX.ctaRingDrawn ? 1 : easeOutCubic(prog(t, 0, 0.6)));
 
   // texte du logo : balayage gauche → droite
-  const tp = easeInOutCubic(prog(t, 0.35, 0.85));
+  const tp = FX.ctaRingDrawn ? easeInOutCubic(prog(t, 0.05, 0.5)) : easeInOutCubic(prog(t, 0.35, 0.85));
   if (tp > 0) {
     ctx.save();
     ctx.beginPath();
@@ -1034,38 +1029,122 @@ scenes.chat = (t) => {
   maskedText('INSCRIPTIONS SUR WHATSAPP', 70, 250, { family: TEXT, size: 40, weight: 700, ls: 6, color: C.orange }, sp(t, 'ui'));
   hairline(70, 282, 1010, easeOutExpo(prog(t, 0, 0.5)), 'rgba(241,236,223,0.35)', 2);
 
-  const f = { family: TEXT, size: 54, weight: 700 };
+  const f = { family: TEXT, size: 74, weight: 700 };
   // reçu
   const p1 = sp(t - 0.1, 'card');
-  bubble(70, 640, 760, 230, C.canopy, false, p1);
+  bubble(70, 520, 900, 300, C.canopy, false, p1);
   if (p1 > 0.6) {
-    text('Dimanche 8h au Banco,', 120, 735, { ...f, color: C.paper });
-    text('tu viens ?', 120, 805, { ...f, color: C.paper });
-    text('07:58', 790, 850, { family: TEXT, size: 28, weight: 500, color: 'rgba(241,236,223,0.55)', align: 'right' });
+    text('Dimanche 8h au Banco,', 125, 640, { ...f, color: C.paper });
+    text('tu viens ?', 125, 735, { ...f, color: C.paper });
+    text('07:58', 925, 795, { family: TEXT, size: 32, weight: 500, color: 'rgba(241,236,223,0.55)', align: 'right' });
   }
   // en train d'écrire
   if (t > 0.65 && t < 1.15) {
-    bubble(820, 960, 190, 110, C.paper, true, sp(t - 0.65, 'ui'));
+    bubble(770, 960, 240, 140, C.paper, true, sp(t - 0.65, 'ui'));
     for (let k = 0; k < 3; k++) {
-      const yy = 1015 - Math.max(0, Math.sin((t * 10 - k * 0.8) * Math.PI / 2)) * 12;
+      const yy = 1030 - Math.max(0, Math.sin((t * 10 - k * 0.8) * Math.PI / 2)) * 16;
       ctx.fillStyle = C.forest;
       ctx.beginPath();
-      ctx.arc(875 + k * 40, yy, 11, 0, Math.PI * 2);
+      ctx.arc(840 + k * 50, yy, 14, 0, Math.PI * 2);
       ctx.fill();
     }
   }
   // envoyé
   const p2 = sp(t - 1.15, 'card');
-  bubble(330, 960, 680, 200, C.orange, true, p2);
+  bubble(150, 960, 860, 300, C.orange, true, p2);
   if (p2 > 0.6) {
-    text('Je m’inscris !', 380, 1065, { family: DISPLAY, size: 92, color: C.forest });
-    text('07:59', 900, 1130, { family: TEXT, size: 28, weight: 500, color: C.forest, align: 'right' });
-    ticks(918, 1120, t > 1.8 ? C.paper : 'rgba(11,35,24,0.5)');
+    text('Je m’inscris !', 205, 1145, { family: DISPLAY, size: fitSize('Je m’inscris !', 740), color: C.forest });
+    text('07:59', 895, 1232, { family: TEXT, size: 32, weight: 500, color: C.forest, align: 'right' });
+    ticks(915, 1222, t > 1.8 ? C.paper : 'rgba(11,35,24,0.5)');
   }
-  // numéro
-  const p3 = sp(t - 1.9, 'card');
-  maskedText('+225 07 08 21 42 54', 70, 1420, { size: fitSize('+225 07 08 21 42 54', 940), color: C.paper }, p3);
 };
+
+// ---------------------------------------------------------------- tampons hors écran
+
+const buffers = {};
+function buffer(name) {
+  if (!buffers[name]) {
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    buffers[name] = c;
+  }
+  return buffers[name];
+}
+
+// Dessine un plan sur le canvas principal puis le copie dans un tampon.
+function shot(name, id, t) {
+  ctx.save();
+  scenes[id](t);
+  ctx.restore();
+  const b = buffer(name);
+  const g = b.getContext('2d');
+  g.clearRect(0, 0, W, H);
+  g.drawImage(canvas, 0, 0);
+  return b;
+}
+
+// ---------------------------------------------------------------- outils de transition
+
+// Trait de pinceau sec : une bande de « poils » de longueurs inégales, inclinée.
+const BRISTLES = (() => {
+  const r = rng(77);
+  return Array.from({ length: 110 }, () => ({ lag: r() * 340 + (r() > 0.85 ? 200 : 0), gap: r() > 0.93 }));
+})();
+function brushPath(p, angle) {
+  const n = BRISTLES.length;
+  const band = 2900;
+  const hgt = band / n;
+  const m = ctx.getTransform();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(angle);
+  ctx.beginPath();
+  BRISTLES.forEach((b, i) => {
+    const head = -1500 + p * 3400 - b.lag;
+    if (head > -1500 && !(b.gap && p < 0.97)) ctx.rect(-1500, -band / 2 + i * hgt, head + 1500, hgt + 1.2);
+  });
+  ctx.setTransform(m);
+}
+
+// Feuille tropicale (silhouette + nervures).
+function leaf(x, y, len, rot, body, vein) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(len, len);
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(0, -1);
+  ctx.bezierCurveTo(0.46, -0.55, 0.42, 0.55, 0, 1);
+  ctx.bezierCurveTo(-0.42, 0.55, -0.46, -0.55, 0, -1);
+  ctx.fill();
+  ctx.strokeStyle = vein;
+  ctx.lineWidth = 0.018;
+  ctx.beginPath();
+  ctx.moveTo(0, -0.95);
+  ctx.lineTo(0, 1.25);
+  for (let k = -3; k <= 3; k++) {
+    const yy = k * 0.24;
+    ctx.moveTo(0, yy);
+    ctx.quadraticCurveTo(0.18, yy - 0.12, 0.33, yy - 0.3 + Math.abs(k) * 0.05);
+    ctx.moveTo(0, yy);
+    ctx.quadraticCurveTo(-0.18, yy - 0.12, -0.33, yy - 0.3 + Math.abs(k) * 0.05);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+const LEAVES = (() => {
+  const r = rng(31);
+  const cols = [['#06150E', '#123426'], ['#0E2C1F', '#1D4A36'], ['#143B2B', '#25573F']];
+  return Array.from({ length: 14 }, (_, i) => {
+    const a = r() * Math.PI * 2;
+    return {
+      a, d: 0.15 + r() * 0.55, t0: 0.35 + i * 0.045 + r() * 0.08,
+      rot: a + Math.PI / 2 + (r() - 0.5) * 0.9, col: cols[i % 3], len: 0.7 + r() * 0.6,
+    };
+  });
+})();
 
 // ---------------------------------------------------------------- horloge maîtresse
 
@@ -1080,6 +1159,87 @@ function drawGrain(t) {
   ctx.restore();
 }
 
+// ---------------------------------------------------------------- transitions entre plans
+// Chaque transition remplace le rendu des plans pendant sa fenêtre [a, b).
+// Les temps sont lus dans la timeline (début des plans) pour rester synchrones.
+
+const at = (id) => assets.timeline.scenes.find((x) => x.id === id).start;
+
+const TRANSITIONS = [
+  // T3 — traversée de canopée : 7 KM → carte
+  { a: () => at('map') - 0.7, b: () => at('map') + 0.75, draw(t) {
+    const o = at('map') - 1.05;
+    if (t < at('map')) scenes.km(t - at('km'));
+    else scenes.map(t - at('map'));
+    for (const lf of LEAVES) {
+      const u = (t - o - lf.t0) / 0.75;
+      if (u <= 0 || u >= 1) continue;
+      const z = Math.pow(u, 2.2);
+      const r = lf.d * 900 + z * 2600;
+      leaf(W / 2 + Math.cos(lf.a) * r, H / 2 + Math.sin(lf.a) * r * 1.2, (300 + z * 2600) * lf.len, lf.rot + z * 0.4, lf.col[0], lf.col[1]);
+    }
+  } },
+  // T4 — plongée dans le « O » de BANCO : carte → rafale
+  { a: () => at('burst') - 0.55, b: () => at('burst'), draw(t) {
+    const sB = fitSize('BANCO', 880);
+    const asc = measure('BANCO', { size: sB }).asc;
+    const ox = 66 + measure('BANC', { size: sB }).w;
+    const ow = measure('O', { size: sB }).w;
+    const cx = ox + ow / 2, cy = 1250 + asc / 2;
+    const s = easeInCubic(prog(t, at('burst') - 0.55, at('burst')));
+    const Z = Math.pow(34, s);
+    const b = shot('next', 'burst', 0);
+    fillBg(C.forest);
+    ctx.save();
+    ctx.translate(lerp(cx, W / 2, s), lerp(cy, H / 2, s));
+    ctx.scale(Z, Z);
+    ctx.translate(-cx, -cy);
+    scenes.map(t - at('map'));
+    const cw = ow * 0.36, ch = asc * 0.66;
+    ctx.beginPath();
+    ctx.roundRect(cx - cw / 2, cy - ch / 2, cw, ch, cw / 2);
+    ctx.restore();
+    ctx.save();
+    ctx.clip();
+    ctx.drawImage(b, 0, 0);
+    ctx.restore();
+  } },
+  // T2 — coup de pinceau : rafale → date
+  { a: () => at('date') - 0.3, b: () => at('date') + 0.35, draw(t) {
+    const t0 = at('date');
+    const p1 = easeInOutCubic(prog(t, t0 - 0.3, t0));
+    const p2 = easeInOutCubic(prog(t, t0, t0 + 0.35));
+    const nx = p2 > 0 ? shot('next', 'date', t - t0) : null;
+    scenes.burst(Math.min(t, t0 - 1e-3) - at('burst'));
+    ctx.save();
+    brushPath(p1, -11 * DEG);
+    ctx.fillStyle = C.orange;
+    ctx.fill();
+    ctx.restore();
+    if (nx) {
+      ctx.save();
+      brushPath(p2, 9 * DEG);
+      ctx.clip();
+      ctx.drawImage(nx, 0, 0);
+      ctx.restore();
+    }
+  } },
+  // T1 — raccord par le cercle : le tampon du ticket devient l'ensō de la signature
+  { a: () => at('cta') - 0.65, b: () => at('cta'), draw(t) {
+    const z0 = [804, 579], z1 = [540, 520];
+    const s = easeInOutCubic(prog(t, at('cta') - 0.65, at('cta')));
+    const Z = lerp(1, 600 / 236, s);
+    fillBg(C.forest);
+    ctx.save();
+    ctx.translate(lerp(z0[0], z1[0], s), lerp(z0[1], z1[1], s));
+    ctx.scale(Z, Z);
+    ctx.rotate(lerp(0, 14, s) * DEG);
+    ctx.translate(-z0[0], -z0[1]);
+    scenes.ticket(Math.min(t - at('ticket'), 2.34)); // figé : le tampon reste sous la caméra
+    ctx.restore();
+  } },
+];
+
 function seek(t) {
   const tl = assets.timeline;
   t = clamp(t, 0, tl.duration - 1e-6);
@@ -1088,7 +1248,9 @@ function seek(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
-  scenes[s.id](t - s.start, t);
+  const tr = TRANSITIONS.find((x) => t >= x.a() && t < x.b());
+  if (tr) tr.draw(t);
+  else scenes[s.id](t - s.start, t);
   ctx.restore();
   drawGrain(t);
 }
@@ -1097,6 +1259,7 @@ export {
   ctx, canvas, W, H, C, DISPLAY, TEXT, DEG, LOGO, assets, scenes,
   clamp, lerp, prog, easeOutCubic, easeInCubic, easeInOutCubic, easeOutExpo,
   spring, sp, rng, shake, text, measure, fitSize, maskedText, fillBg, hairline, enso, drawGrain,
+  buffer, shot, brushPath, leaf, LEAVES,
 };
 
 window.ready = load().then(() => {

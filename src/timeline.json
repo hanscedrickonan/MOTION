@@ -2,7 +2,7 @@
   "width": 1080,
   "height": 1920,
   "fps": 60,
-  "duration": 20.0,
+  "duration": 22.5,
   "bpm": 120,
   "scenes": [
     {
@@ -31,14 +31,19 @@
       "end": 13.0
     },
     {
-      "id": "ticket",
+      "id": "chat",
       "start": 13.0,
-      "end": 16.0
+      "end": 15.5
+    },
+    {
+      "id": "ticket",
+      "start": 15.5,
+      "end": 18.5
     },
     {
       "id": "cta",
-      "start": 16.0,
-      "end": 20.0
+      "start": 18.5,
+      "end": 22.5
     }
   ],
   "cues": [
@@ -63,8 +68,12 @@
       "sfx": "cut"
     },
     {
-      "t": 4.0,
-      "sfx": "cut"
+      "t": 3.45,
+      "sfx": "swipe"
+    },
+    {
+      "t": 3.8,
+      "sfx": "leaves"
     },
     {
       "t": 4.9,
@@ -75,8 +84,8 @@
       "sfx": "tick"
     },
     {
-      "t": 6.75,
-      "sfx": "swipe"
+      "t": 6.45,
+      "sfx": "riser"
     },
     {
       "t": 7.0,
@@ -99,6 +108,10 @@
       "sfx": "stack"
     },
     {
+      "t": 9.7,
+      "sfx": "brush"
+    },
+    {
       "t": 10.0,
       "sfx": "impact"
     },
@@ -111,39 +124,51 @@
       "sfx": "swipe"
     },
     {
-      "t": 13.0,
-      "sfx": "cut"
+      "t": 13.1,
+      "sfx": "pop"
     },
     {
-      "t": 14.5,
-      "sfx": "tear"
+      "t": 14.15,
+      "sfx": "pop"
     },
     {
-      "t": 15.0,
-      "sfx": "impact"
-    },
-    {
-      "t": 15.4,
-      "sfx": "riser"
-    },
-    {
-      "t": 16.0,
-      "sfx": "brush"
-    },
-    {
-      "t": 16.45,
-      "sfx": "riser"
-    },
-    {
-      "t": 17.0,
-      "sfx": "drop"
-    },
-    {
-      "t": 17.75,
+      "t": 14.8,
       "sfx": "tick"
     },
     {
-      "t": 18.0,
+      "t": 15.5,
+      "sfx": "cut"
+    },
+    {
+      "t": 17.0,
+      "sfx": "tear"
+    },
+    {
+      "t": 17.5,
+      "sfx": "impact"
+    },
+    {
+      "t": 17.9,
+      "sfx": "riser"
+    },
+    {
+      "t": 18.5,
+      "sfx": "impact"
+    },
+    {
+      "t": 18.85,
+      "sfx": "riser"
+    },
+    {
+      "t": 19.5,
+      "sfx": "drop"
+    },
+    {
+      "t": 20.25,
+      "sfx": "tick"
+    },
+    {
+      "t": 20.5,
       "sfx": "final"
     }
   ]

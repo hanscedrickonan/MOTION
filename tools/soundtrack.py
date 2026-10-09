@@ -153,6 +153,17 @@ def sfx(kind):
         t = t_axis(d)
         n = lowpass(highpass(noise(d), 300 + 3000 * t / d), 1500 + 8000 * t / d)
         return n * np.sin(np.pi * t / d) * 0.5
+    if kind == "pop":
+        d = 0.12
+        t = t_axis(d)
+        f = 520 + 600 * np.minimum(1, t / 0.05)
+        return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 38) * 0.45
+    if kind == "leaves":
+        d = 0.9
+        t = t_axis(d)
+        grains = np.repeat(rng.random(int(d * 90) + 1), SR // 90)[: len(t)]
+        n = lowpass(highpass(noise(d), 1200), 6000) * (0.4 + grains)
+        return n * np.sin(np.pi * t / d) ** 1.5 * 0.45
     if kind == "perc":
         return perc(340, 190) * 1.1
     if kind == "perc_low":
@@ -179,6 +190,8 @@ A1, C2, D2, E2, G1 = 55.0, 65.41, 73.42, 82.41, 49.0
 prog = [A1, A1, C2, G1]  # une note par mesure, cycle de 4 mesures
 chords = [[220, 261.6, 329.6, 493.9], [220, 261.6, 329.6, 493.9], [261.6, 329.6, 392.0, 493.9], [196.0, 293.7, 392.0, 440.0]]
 
+CTA = next(sc["start"] for sc in TL["scenes"] if sc["id"] == "cta")
+END = CTA + 2.0  # la musique s'arrête net sur l'impact final
 bars = int(DUR / (4 * BEAT))
 for b in range(bars):
     t0 = b * 4 * BEAT
@@ -186,10 +199,10 @@ for b in range(bars):
     root = prog[b % 4]
     for beat in range(4):
         tb = t0 + beat * BEAT
-        groove = 2.0 <= tb < 16.0 or 17.0 <= tb < 18.0
-        full = 10.0 <= tb < 16.0 or 17.0 <= tb < 18.0
+        groove = 2.0 <= tb < CTA or CTA + 1.0 <= tb < END
+        full = 10.0 <= tb < CTA or CTA + 1.0 <= tb < END
         light = 4.0 <= tb < 7.0
-        if tb >= 18.0 or (16.0 <= tb < 17.0):
+        if tb >= END or (CTA <= tb < CTA + 1.0):
             continue
         if groove:
             place(kick(), tb, 0.75 if light else 1.0)
@@ -201,12 +214,15 @@ for b in range(bars):
             if not (7.0 <= tb < 10.0):
                 for e in (0.5, 0.75) if full else (0.5,):
                     place(bass_note(root, BEAT * 0.24), tb + BEAT * e, 0.9)
-    if sec < 18.0 and sec >= 2.0 and not (16.0 <= sec < 17.0):
-        place(pad([f for f in chords[b % 4]], 4 * BEAT), t0, 1.0, rev=0.5)
+    if 2.0 <= sec and sec + 4 * BEAT <= CTA:
+        place(pad(chords[b % 4], 4 * BEAT), t0, 1.0, rev=0.5)
+    elif sec < CTA < sec + 4 * BEAT:
+        place(pad(chords[b % 4], CTA - sec), t0, 1.0, rev=0.5)
+place(pad(chords[0], 1.0), CTA + 1.0, 1.0, rev=0.5)
 
 # nappe d'ouverture (mesure 1) et de conclusion
 place(pad([220, 329.6, 440], 2.0), 0.0, 0.9, rev=0.6)
-place(pad([220, 261.6, 329.6, 493.9, 659.3], 2.0), 18.0, 1.1, rev=0.8)
+place(pad([220, 261.6, 329.6, 493.9, 659.3], 2.0), END, 1.1, rev=0.8)
 
 for c in TL["cues"]:
     k = c["sfx"]

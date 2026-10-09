@@ -1,102 +1,16 @@
 // Catalogue de démonstration : transitions (T*) et animations (A*) proposées.
 // Même contrat que la vidéo : window.seek(t) dessine l'instant t, de façon déterministe.
 import {
-  FX, ctx, canvas, W, H, C, DISPLAY, TEXT, DEG, scenes,
-  clamp, lerp, prog, easeOutCubic, easeInCubic, easeInOutCubic,
-  rng, text, measure, fitSize, sp, drawGrain,
+  FX, ctx, W, H, C, TEXT, DEG, scenes,
+  clamp, lerp, prog, easeInCubic, easeInOutCubic,
+  text, measure, fitSize, sp, drawGrain, buffer, shot, brushPath, leaf, LEAVES,
 } from './main.js';
-
-// ---------------------------------------------------------------- tampons hors écran
-
-const buffers = {};
-function buffer(name) {
-  if (!buffers[name]) {
-    const c = document.createElement('canvas');
-    c.width = W;
-    c.height = H;
-    buffers[name] = c;
-  }
-  return buffers[name];
-}
-
-// Dessine un plan sur le canvas principal puis le copie dans un tampon.
-function shot(name, id, t) {
-  ctx.save();
-  scenes[id](t);
-  ctx.restore();
-  const b = buffer(name);
-  const g = b.getContext('2d');
-  g.clearRect(0, 0, W, H);
-  g.drawImage(canvas, 0, 0);
-  return b;
-}
 
 function withFX(flags, fn) {
   const prev = { ...FX };
   Object.assign(FX, flags);
   try { return fn(); } finally { Object.assign(FX, prev); }
 }
-
-// ---------------------------------------------------------------- outils de transition
-
-// Trait de pinceau sec : une bande de « poils » de longueurs inégales, inclinée.
-const BRISTLES = (() => {
-  const r = rng(77);
-  return Array.from({ length: 110 }, () => ({ lag: r() * 340 + (r() > 0.85 ? 200 : 0), gap: r() > 0.93 }));
-})();
-function brushPath(p, angle) {
-  const n = BRISTLES.length;
-  const band = 2900;
-  const hgt = band / n;
-  ctx.translate(W / 2, H / 2);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  BRISTLES.forEach((b, i) => {
-    const head = -1500 + p * 3400 - b.lag;
-    if (head > -1500 && !(b.gap && p < 0.97)) ctx.rect(-1500, -band / 2 + i * hgt, head + 1500, hgt + 1.2);
-  });
-  ctx.translate(-W / 2, -H / 2);
-}
-
-// Feuille tropicale (silhouette + nervures).
-function leaf(x, y, len, rot, body, vein) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rot);
-  ctx.scale(len, len);
-  ctx.fillStyle = body;
-  ctx.beginPath();
-  ctx.moveTo(0, -1);
-  ctx.bezierCurveTo(0.46, -0.55, 0.42, 0.55, 0, 1);
-  ctx.bezierCurveTo(-0.42, 0.55, -0.46, -0.55, 0, -1);
-  ctx.fill();
-  ctx.strokeStyle = vein;
-  ctx.lineWidth = 0.018;
-  ctx.beginPath();
-  ctx.moveTo(0, -0.95);
-  ctx.lineTo(0, 1.25);
-  for (let k = -3; k <= 3; k++) {
-    const yy = k * 0.24;
-    ctx.moveTo(0, yy);
-    ctx.quadraticCurveTo(0.18, yy - 0.12, 0.33, yy - 0.3 + Math.abs(k) * 0.05);
-    ctx.moveTo(0, yy);
-    ctx.quadraticCurveTo(-0.18, yy - 0.12, -0.33, yy - 0.3 + Math.abs(k) * 0.05);
-  }
-  ctx.stroke();
-  ctx.restore();
-}
-
-const LEAVES = (() => {
-  const r = rng(31);
-  const cols = [['#06150E', '#123426'], ['#0E2C1F', '#1D4A36'], ['#143B2B', '#25573F']];
-  return Array.from({ length: 14 }, (_, i) => {
-    const a = r() * Math.PI * 2;
-    return {
-      a, d: 0.15 + r() * 0.55, t0: 0.35 + i * 0.045 + r() * 0.08,
-      rot: a + Math.PI / 2 + (r() - 0.5) * 0.9, col: cols[i % 3], len: 0.7 + r() * 0.6,
-    };
-  });
-})();
 
 // ---------------------------------------------------------------- démos
 
@@ -105,10 +19,10 @@ const add = (code, kind, name, dur, draw) => D.push({ code, kind, name, dur, dra
 
 // T1 — raccord par le cercle : le tampon du ticket devient l'ensō de la signature.
 add('T1', 'TRANSITION', 'RACCORD PAR LE CERCLE', 2.9, (t) => {
-  const z0 = [823.5, 564], z1 = [540, 520];
+  const z0 = [804, 579], z1 = [540, 520];
   if (t < 1.2) {
     const s = easeInOutCubic(prog(t, 0.45, 1.2));
-    const Z = lerp(1, 600 / 241, s);
+    const Z = lerp(1, 600 / 236, s);
     ctx.save();
     ctx.translate(lerp(z0[0], z1[0], s), lerp(z0[1], z1[1], s));
     ctx.scale(Z, Z);

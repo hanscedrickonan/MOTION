@@ -1,6 +1,6 @@
 # Shotlist — Randonnée du Cercle
 
-**Format** : 1080×1920 (9:16) · 60 fps · 20,0 s
+**Format** : 1080×1920 (9:16) · 60 fps · 22,5 s (v2 : voir l'encadré « Version 2 » en fin de fichier)
 **Tempo** : 120 BPM → 1 temps = 0,5 s · 1 mesure = 2 s · 10 mesures
 **Ton** : énergique, sportif, éditorial
 
@@ -99,3 +99,20 @@ L'**ensō** du logo (le cercle au pinceau) = la **boucle de 7 km**. Le **point n
 | 6–7a | P5 Date | ▲▲ | éditorial |
 | 7b–8 | P6 Tarif | ▲▲ | objet |
 | 9–10 | P7 Appel à l'action | ▲ puis tenu | clair |
+
+---
+
+## Version 2 — effets validés après le catalogue
+
+| Temps | Changement |
+|---|---|
+| 3,25 → 4,75 s | **T3** des feuilles tropicales passent devant la caméra, la carte apparaît derrière |
+| 4,0 → 7,0 s | **A1** la boucle se dessine en empreintes de pas |
+| 6,45 → 7,0 s | **T4** plongée dans le « O » de BANCO (remplace le volet crème) |
+| 7,0 → 9,0 s | **A3/A4** « MARCHE. » sautille, « RESPIRE. » respire |
+| 9,0 → 10,0 s | **A8** six randonneurs (pictogrammes de sentier) marchent sous l'empilement |
+| 9,7 → 10,35 s | **T2** coup de pinceau orange, la date est révélée par un second trait |
+| 13,0 → 15,5 s | **A6 — nouveau plan** discussion WhatsApp : « Dimanche 8h au Banco, tu viens ? » → « Je m'inscris ! » |
+| 15,5 → 18,5 s | Ticket (décalé de 2,5 s) |
+| 17,85 → 18,5 s | **T1** zoom sur le tampon, qui devient l'ensō de la signature |
+| 18,5 → 22,5 s | Signature (l'ensō est déjà là, le point tombe à 19,5 s) |
