@@ -244,7 +244,7 @@ mix = np.stack([L, R], axis=1)
 mix = np.tanh(mix * 0.9) / np.tanh(0.9)
 fade = np.minimum(1, (DUR - np.arange(N) / SR) / 0.15)[:, None]
 mix *= fade
-mix *= 10 ** (-1 / 20) / np.max(np.abs(mix))
+mix *= 10 ** (-2 / 20) / np.max(np.abs(mix))  # -2 dBFS : marge pour l'encodage AAC
 
 out = Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / "out/soundtrack.wav")
 out.parent.mkdir(parents=True, exist_ok=True)
