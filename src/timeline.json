@@ -1,0 +1,39 @@
+{
+  "width": 1080,
+  "height": 1920,
+  "fps": 60,
+  "duration": 20.0,
+  "bpm": 120,
+  "scenes": [
+    { "id": "hook",   "start": 0.0,  "end": 2.0 },
+    { "id": "km",     "start": 2.0,  "end": 4.0 },
+    { "id": "map",    "start": 4.0,  "end": 7.0 },
+    { "id": "burst",  "start": 7.0,  "end": 10.0 },
+    { "id": "date",   "start": 10.0, "end": 13.0 },
+    { "id": "ticket", "start": 13.0, "end": 16.0 },
+    { "id": "cta",    "start": 16.0, "end": 20.0 }
+  ],
+  "cues": [
+    { "t": 0.00,  "sfx": "brush" },
+    { "t": 1.00,  "sfx": "drop" },
+    { "t": 1.45,  "sfx": "riser" },
+    { "t": 2.00,  "sfx": "impact" },
+    { "t": 4.00,  "sfx": "cut" },
+    { "t": 4.90,  "sfx": "tick" },
+    { "t": 6.75,  "sfx": "swipe" },
+    { "t": 7.00,  "sfx": "perc" },
+    { "t": 7.50,  "sfx": "perc" },
+    { "t": 8.00,  "sfx": "perc" },
+    { "t": 8.50,  "sfx": "perc_low" },
+    { "t": 9.00,  "sfx": "stack" },
+    { "t": 10.00, "sfx": "impact" },
+    { "t": 12.70, "sfx": "swipe" },
+    { "t": 13.00, "sfx": "cut" },
+    { "t": 14.50, "sfx": "tear" },
+    { "t": 15.40, "sfx": "riser" },
+    { "t": 16.00, "sfx": "brush" },
+    { "t": 17.00, "sfx": "drop" },
+    { "t": 17.75, "sfx": "tick" },
+    { "t": 18.00, "sfx": "final" }
+  ]
+}
